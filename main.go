@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"crypto/md5"
 	"os/exec"
+	"regexp"
+	"strings"
 )
 
 type projectJson struct{
@@ -52,6 +54,30 @@ func main() {
 	}
 
 	minify()
+}
+
+func fullFillImgUrl(assertUrl, css string) string{
+	var fillImgUrl = func(str string) string {
+		if strings.Index(str, "http://") > -1 {
+			return str
+		}
+
+		regL := regexp.MustCompile(`\(\s*['"]?`)
+		str = regL.ReplaceAllString(str,`("`)
+
+		regR := regexp.MustCompile(`['"]?\s*\)`)
+		str = regR.ReplaceAllString(str,`")`)
+
+		if strings.Index(str, `("/`) > -1 {
+			return str
+		}
+
+		str = strings.Replace(str,`("`,`("`+assertUrl,1)
+		return str
+	}
+	reg := regexp.MustCompile(`url\s*\(\s*['"]?(.*?)['"]?\s*\)`)
+	css = reg.ReplaceAllStringFunc(css, fillImgUrl)
+	return css
 }
 
 func readAssetsConf() (assets map[string]assetsJson) {
@@ -123,7 +149,7 @@ func minifyJs(item assetsJson) string {
 	cmd := exec.Command("uglifyjs", output, "-o", project.RootPath+project.AssetsFolderPrefix+outputFile)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("error: " + err.Error())
+		fmt.Println("uglifyjs error: " + err.Error())
 	}
 
 	return outputFile;
@@ -133,7 +159,11 @@ func minifyCss(item assetsJson) string {
 
 	content := ""
 	for _, filename := range item.CssFiles {
-		content += getFileContent(project.RootPath+project.AssetsFolderPrefix+filename)
+		tmp := getFileContent(project.RootPath+project.AssetsFolderPrefix+filename)
+		arr := strings.Split(filename,"/")
+		arr1 := arr[0:len(arr)-1]
+		path := strings.Join(arr1,"/") + "/"
+		content += fullFillImgUrl(path, tmp)
 	}
 	content += item.CssCodes;
 
@@ -146,7 +176,7 @@ func minifyCss(item assetsJson) string {
 	cmd := exec.Command("csso", "-i", output, "-o", project.RootPath+project.AssetsFolderPrefix+outputFile)
 	err := cmd.Run()
 	if err != nil {
-		fmt.Println("error: " + err.Error())
+		fmt.Println("csso error: " + err.Error())
 	}
 
 	return outputFile;

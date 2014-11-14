@@ -1,0 +1,7 @@
+{
+    "rootPath": "/Users/elvin/Workspace/Golang/src/gz-securities",
+    "assetsConfFile": "/Users/elvin/Workspace/Golang/src/gz-securities/conf/assets.json",
+    "assetsConfOutputFile": "/Users/elvin/Workspace/Golang/src/gz-securities/conf/assets_prod.json",
+    "assetsFolderPrefix": "/static",
+    "minFilesOutputPrefix": "/assets/min"
+}

@@ -1,7 +1,0 @@
-{
-    "rootPath": "/home/elvin/GoWorkspace/src/gz-securities",
-    "assetsConfFile": "/home/elvin/GoWorkspace/src/gz-securities/conf/assets.json",
-    "assetsConfOutputFile": "/home/elvin/GoWorkspace/src/gz-securities/conf/assets_prod.json",
-    "assetsFolderPrefix": "/static",
-    "minFilesOutputPrefix": "/assets/min"
-}
