@@ -15,7 +15,7 @@ type projectJson struct{
 	RootPath                     string `json:"rootPath"`
 	AssetsFolderPrefix           string `json:"assetsFolderPrefix"`
 	AssetsConfFile               string `json:"assetsConfFile"`
-	AssetsConfOutputFile         string `json:"assetsConfOutputFile"`
+	AssetsConfFileOutput         string `json:"assetsConfFileOutput"`
 	MinFilesOutputPrefix         string `json:"minFilesOutputPrefix"`
 }
 
@@ -56,23 +56,23 @@ func main() {
 	minify()
 }
 
-func fullFillImgUrl(assertUrl, css string) string{
+func fullFillImgUrl(assertUrl, css string) string {
 	var fillImgUrl = func(str string) string {
 		if strings.Index(str, "http://") > -1 {
 			return str
 		}
 
 		regL := regexp.MustCompile(`\(\s*['"]?`)
-		str = regL.ReplaceAllString(str,`("`)
+		str = regL.ReplaceAllString(str, `("`)
 
 		regR := regexp.MustCompile(`['"]?\s*\)`)
-		str = regR.ReplaceAllString(str,`")`)
+		str = regR.ReplaceAllString(str, `")`)
 
 		if strings.Index(str, `("/`) > -1 {
 			return str
 		}
 
-		str = strings.Replace(str,`("`,`("`+assertUrl,1)
+		str = strings.Replace(str, `("`, `("`+assertUrl, 1)
 		return str
 	}
 	reg := regexp.MustCompile(`url\s*\(\s*['"]?(.*?)['"]?\s*\)`)
@@ -83,9 +83,9 @@ func fullFillImgUrl(assertUrl, css string) string{
 func readAssetsConf() (assets map[string]assetsJson) {
 	assets = make(map[string]assetsJson)
 
-	file, err := os.Open(project.AssetsConfFile)
+	file, err := os.Open(project.RootPath + project.AssetsConfFile)
 	if err != nil {
-		panic("Assets配置文件不存在: " + project.AssetsConfFile)
+		panic("Assets配置文件不存在: " + project.RootPath + project.AssetsConfFile)
 	}
 	defer file.Close()
 
@@ -93,7 +93,7 @@ func readAssetsConf() (assets map[string]assetsJson) {
 	err = dec.Decode(&assets)
 
 	if err != nil {
-		panic("Assets配置文件解析失败: " + project.AssetsConfFile + "\n" + err.Error())
+		panic("Assets配置文件解析失败: " + project.RootPath + project.AssetsConfFile + "\n" + err.Error())
 		os.Exit(1)
 	}
 	return
@@ -103,6 +103,15 @@ func minify() {
 	fmt.Println("begin")
 
 	newAssets := make(map[string]assetsJson)
+
+	outputPath := project.RootPath + project.AssetsFolderPrefix + project.MinFilesOutputPrefix
+	err := os.RemoveAll(outputPath)
+	if err == nil {
+		fmt.Println("Remove all old minify files success")
+	}else {
+		fmt.Println("Fail to remove all old minify files")
+	}
+	os.Mkdir(outputPath, 0775)
 
 	assets := readAssetsConf()
 	for key, item := range assets {
@@ -123,9 +132,9 @@ func minify() {
 }
 
 func writeNewAssets(newAssets map[string]assetsJson) {
-	file, err := os.Create(project.AssetsConfOutputFile)
+	file, err := os.Create(project.RootPath + project.AssetsConfFileOutput)
 	if err != nil {
-		panic("不能读写文件: " + project.AssetsConfOutputFile + err.Error())
+		panic("不能读写文件: " + project.RootPath + project.AssetsConfFileOutput + err.Error())
 	}
 
 	enc := json.NewEncoder(file)
@@ -159,10 +168,10 @@ func minifyCss(item assetsJson) string {
 
 	content := ""
 	for _, filename := range item.CssFiles {
-		tmp := getFileContent(project.RootPath+project.AssetsFolderPrefix+filename)
-		arr := strings.Split(filename,"/")
+		tmp := getFileContent(project.RootPath + project.AssetsFolderPrefix + filename)
+		arr := strings.Split(filename, "/")
 		arr1 := arr[0:len(arr)-1]
-		path := strings.Join(arr1,"/") + "/"
+		path := strings.Join(arr1, "/") + "/"
 		content += fullFillImgUrl(path, tmp)
 	}
 	content += item.CssCodes;
